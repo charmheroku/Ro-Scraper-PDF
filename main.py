@@ -43,11 +43,24 @@ def get_from_csv():
     return data_in_lists
 
 
+def append_api(ls):
+    headers = {"Authorization": "Bearer " + os.getenv("AUTH_TOKEN")}
+    api_url = os.getenv("API_URL")
+    try:
+        for name, ordine, link in ls:
+            requests.post(
+                api_url,
+                json={"Ordine": ordine, "Link": link, "Name": name},
+                headers=headers,
+            )
+    except Exception as err:
+        print(err)
+
+
 def main():
     url = os.getenv("URL")
     urls = get_data(get_html(url))
     urls_csv = get_from_csv()
-
 
 
 if __name__ == "__main__":
