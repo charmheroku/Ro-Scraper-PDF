@@ -1,4 +1,5 @@
 import os
+import csv
 import logging
 import requests
 
@@ -34,9 +35,19 @@ def get_data(html):
     return urls
 
 
+def get_from_csv():
+    with open("log-nums.csv") as fp:
+        reader = csv.reader(fp, delimiter=",", quotechar='"')
+        data_read = [item for sublist in reader for item in sublist]
+        data_in_lists = list(set(data_read))
+    return data_in_lists
+
+
 def main():
     url = os.getenv("URL")
     urls = get_data(get_html(url))
+    urls_csv = get_from_csv()
+
 
 
 if __name__ == "__main__":
