@@ -1,9 +1,13 @@
 import os
+import io
 import csv
+import re
+import time
 import logging
-import requests
 
+import requests
 from bs4 import BeautifulSoup
+from PyPDF2 import PdfReader
 
 
 # Logging
@@ -57,10 +61,60 @@ def append_api(ls):
         print(err)
 
 
+def add_to_csv(row):
+    with open("log-nums.csv", "a", newline="") as fp:
+        writer = csv.writer(fp, delimiter=",")
+        writer.writerows(row)
+
+
+def file_extract_csv(urls, csv_urls):
+    print("Begining...")
+    all_numbers = []
+    all_cnt = 0
+    pattern = re.compile(r"\((.*?)\)", re.MULTILINE | re.DOTALL)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0"
+    }
+    for url, number in urls:
+        if url not in csv_urls:
+            try:
+                all_numbers = []
+                response = requests.get(url, headers=headers)
+                with io.BytesIO(response.content) as file:
+                    pdf = PdfReader(file)
+                    for i in range(len(pdf.pages)):
+                        pageObj = pdf.pages[i]
+                        content = pageObj.extract_text().strip()
+                        info = pattern.findall(content)
+                        for item in info:
+                            it = []
+                            item = item.replace("\n", "")
+                            if item != "UE":
+                                it.extend([item, number, url])
+                                all_numbers.append(it)
+            except Exception:
+                logger.exception(f"problem was with document {url}")
+
+            finally:
+                logging.info(f"I've done with {url}!")
+
+            time.sleep(5)
+            cnt = len(all_numbers)
+
+            if cnt > 0:
+                append_api(all_numbers)
+                all_cnt += cnt
+            add_to_csv([[url, number, cnt]])
+
+    msg = f"I have {all_cnt} new documents"
+    logging.info(msg)
+
+
 def main():
     url = os.getenv("URL")
     urls = get_data(get_html(url))
     urls_csv = get_from_csv()
+    file_extract_csv(urls, urls_csv)
 
 
 if __name__ == "__main__":
