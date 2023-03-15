@@ -6,13 +6,24 @@ import time
 import logging
 
 import requests
+import telebot
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
 
 
 # Logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename=os.getenv("LOG_FILE"))
+logging.basicConfig(
+    filename=os.getenv("LOG_FILE"),
+    format="%(asctime)s - %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
+
+# bot
+api_bot = os.getenv("API_BOT")
+user_id_admin = os.getenv("USERID_BOT")
+bot = telebot.TeleBot(api_bot)
 
 
 def get_html(url):
@@ -69,6 +80,7 @@ def add_to_csv(row):
 
 def file_extract_csv(urls, csv_urls):
     print("Begining...")
+    bot.send_message(user_id_admin, "Begining...")
     all_numbers = []
     all_cnt = 0
     pattern = re.compile(r"\((.*?)\)", re.MULTILINE | re.DOTALL)
@@ -108,6 +120,7 @@ def file_extract_csv(urls, csv_urls):
 
     msg = f"I have {all_cnt} new documents"
     logging.info(msg)
+    bot.send_message(user_id_admin, msg)
 
 
 def main():
